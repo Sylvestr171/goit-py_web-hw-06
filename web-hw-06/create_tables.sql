@@ -15,7 +15,8 @@ CREATE TABLE if NOT EXISTS students (
 -- Таблиця викладачів
 CREATE TABLE if NOT exists teachers (
   id SERIAL PRIMARY KEY,
-  fullname VARCHAR(150) NOT NULL
+  fullname VARCHAR(150) NOT NULL,
+  email VARCHAR(150)
 );
 
 -- Таблиця предметів

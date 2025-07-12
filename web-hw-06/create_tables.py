@@ -30,8 +30,8 @@ if __name__ == '__main__':
     try:
         with create_connection(connection_params) as conn:
             if conn is not None:
-                for i in statements:
-                    create_table(conn, i)
+                for _ in statements:
+                    create_table(conn, _)
             else:
                 print("Error! cannot create the database connection.")
     except RuntimeError as err:

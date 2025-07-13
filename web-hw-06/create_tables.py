@@ -22,7 +22,7 @@ def create_table(conn, sql_expression: str):
 
 if __name__ == '__main__':
 
-    with open("create_tables.sql", "r") as sql:
+    with open("web-hw-06\\create_tables.sql", "r") as sql:
         sql_script = sql.read()
         
     statements = [stmt.strip() for stmt in sql_script.strip().split(';') if stmt.strip()]

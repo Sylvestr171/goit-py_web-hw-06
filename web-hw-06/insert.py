@@ -132,18 +132,21 @@ def insert_data(conn, sql_expression: str, data_to_insert: list, attr_list: list
     finally:
         c.close()
 
-# def insert_data(conn, sql_expression: str, data_to_insert: list, attr_list: list):
-#     c = conn.cursor()
-#     try:
-#         for i in data_to_insert:
-#             attribute = values = tuple(getattr(i, attr) for attr in attr_list)
-#             c.execute(sql_expression, attribute)
-#         conn.commit()
-#     except DatabaseError as e:
-#         logging.error(e)
-#         conn.rollback()
-#     finally:
-#         c.close()
+def unique_list(cls, len_of_list):
+    list_of_ithem=[]
+    used_ithem = set()
+    while len(list_of_ithem) < len_of_list:
+        ithem =cls()
+        if ithem.name not in used_ithem:
+            list_of_ithem.append(ithem)
+            used_ithem.add(ithem.name)
+    return list_of_ithem
+
+
+
+
+
+
 
 if __name__ == '__main__':
     
@@ -168,12 +171,11 @@ if __name__ == '__main__':
         """
 
 
-    groups = [Group() for _ in range(number_of_groups)]
+    groups = unique_list(Group, number_of_groups)
     students = [Students() for _ in range(number_of_students)]
     teachers = [Teachers() for _ in range(number_of_teachers)]
-    subjects = []
-    subjects = [Subject() for _ in range(number_of_subjects) if _ not in subjects]
-
+    subjects = unique_list(Subject, number_of_subjects)
+    
     try:
         with create_connection() as conn:
             if conn is not None:

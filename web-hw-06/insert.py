@@ -1,6 +1,6 @@
 import logging
 from random import randint, choice, sample
-
+from datetime import datetime, timedelta
 from faker import Faker
 from psycopg2 import DatabaseError
 
@@ -10,6 +10,8 @@ number_of_students = randint(30,50)
 number_of_groups = 3
 number_of_subjects = randint(5,8)
 number_of_teachers = randint(3,5)
+start_date_for_grade = "2025-01-01"
+end_date_for_grade = "2025-07-01"
 # до 20 оцінок у кожного студента з усіх предметів
 
 fake = Faker('uk-Ua')
@@ -38,6 +40,32 @@ class Group(RandomNamedFromVocabulary):
     def __str__(self):
         return self.name
     
+class Grade(RandomNamedFromVocabulary):
+    #grades_vocabulary = ["A", "B", "C", "D", "E", "F", "Fx"]
+    grades_vocabulary = [1, 2, 3, 4, 5]
+
+    def __init__(self, student_name, start_date, end_date):
+        self.grade = self.generate_name()
+        self.grade_date = self.random_date(start_date, end_date)
+        self.student_name = student_name
+
+    def generate_name(self):
+        grade = choice(self.grades_vocabulary)
+        return f"{grade}"
+    
+    @staticmethod
+    def random_date(start_date: str = "2025-01-01", end_date: str = "2025-07-01", date_format="%Y-%m-%d") -> str:
+        start = datetime.strptime(start_date, date_format)
+        end = datetime.strptime(end_date, date_format)
+        delta = end - start
+        random_days = randint(0, delta.days)
+        result = start + timedelta(days=random_days)
+        return result.strftime(date_format)
+
+    def __str__(self):
+        return f"{self.grade} ({self.grade_date})"
+    
+
 class Subject(RandomNamedFromVocabulary):
     subjects_vocabulary = (
     "Вища математика",
@@ -104,6 +132,18 @@ def insert_data(conn, sql_expression: str, data_to_insert: list, attr_list: list
     finally:
         c.close()
 
+# def insert_data(conn, sql_expression: str, data_to_insert: list, attr_list: list):
+#     c = conn.cursor()
+#     try:
+#         for i in data_to_insert:
+#             attribute = values = tuple(getattr(i, attr) for attr in attr_list)
+#             c.execute(sql_expression, attribute)
+#         conn.commit()
+#     except DatabaseError as e:
+#         logging.error(e)
+#         conn.rollback()
+#     finally:
+#         c.close()
 
 if __name__ == '__main__':
     
@@ -122,6 +162,11 @@ if __name__ == '__main__':
     sql_insert_data_subjects = """
         INSERT INTO subjects (name, teacher_id) VALUES (%s, (SELECT id FROM "teachers" ORDER BY random() LIMIT 1));
         """
+    sql_insert_data_grades = """
+        INSERT INTO grades (student_id, subject_id, grade, grade_date) 
+        VALUES ((SELECT id FROM "students" where fullname = %s), (SELECT id FROM "subjects" ORDER BY random() LIMIT 1), %s, %s);
+        """
+
 
     groups = [Group() for _ in range(number_of_groups)]
     students = [Students() for _ in range(number_of_students)]
@@ -136,6 +181,9 @@ if __name__ == '__main__':
                 insert_data(conn, sql_insert_data_students, students, ['name'])
                 insert_data(conn, sql_insert_data_teachers, teachers, ['name', 'email'])
                 insert_data(conn, sql_insert_data_subjects, subjects, ['name'])
+                for ithem in students:
+                    grades = [Grade(ithem.name, start_date_for_grade, end_date_for_grade) for _ in range(randint(1,20))]
+                    insert_data(conn, sql_insert_data_grades, grades, ['student_name', 'grade', 'grade_date'])
             else:
                 print("Error! cannot create the database connection.")
     except RuntimeError as err:
